@@ -123,8 +123,12 @@ uv run python -m unittest discover -s tests -p 'test_integration.py' -v
 uv run python -m unittest discover -s tests -v
 ```
 
-No real Groq call has been verified here; credential-dependent verification is
-still pending. Before submission, follow the assignment's repository/link and
+A separate real-Groq smoke test passed with `GROQ_MODEL=openai/gpt-oss-20b`
+using 10 requests and isolated temporary data: creation, alerts, stock changes,
+restart persistence, and log append. Set that model in your local `.env` if the
+fallback `llama-3.3-70b-versatile` is unavailable; source defaults are unchanged.
+This records one successful run, not a guarantee of model behavior.
+Before submission, follow the assignment's repository/link and
 demo requirements, and check that no credentials or private runtime CSVs are
 included. Publishing is a separate manual step.
 

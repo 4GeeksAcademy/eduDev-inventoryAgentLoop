@@ -105,8 +105,13 @@ uv run python -m unittest discover -s tests -v
 Los tests usan archivos temporales, sin credenciales, lecturas de `.env` ni llamadas
 a proveedores. API e integración usan servidores HTTP locales desechables;
 la integración simula solo las respuestas del SDK y verifica historial,
-persistencia tras reinicio y registro acumulado entre sesiones. No se ha verificado
-una llamada real a Groq; esa comprobación con credenciales sigue pendiente.
+persistencia tras reinicio y registro acumulado entre sesiones.
+
+Una prueba separada con Groq real pasó usando `GROQ_MODEL=openai/gpt-oss-20b`,
+10 solicitudes y datos temporales: creación, alertas, cambios de stock,
+persistencia tras reinicio y registro acumulado. Configura ese modelo en tu `.env`
+si `llama-3.3-70b-versatile` no está disponible; el valor por defecto del código
+no cambió. Es evidencia de una ejecución, no una garantía del comportamiento del modelo.
 
 Git ignora `.env`, `.venv`, bytecode, `products.csv` y `conversation_log.csv`.
 Nunca publiques secretos. Antes de entregar, revisa los requisitos de repositorio,
