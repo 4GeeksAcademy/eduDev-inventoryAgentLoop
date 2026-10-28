@@ -1,7 +1,6 @@
-# Inventory API
+# Inventory API and CLI agent
 
-A minimal single-inventory FastAPI API backed by CSV. The CLI agent is not yet
-implemented. The original `main.py` and Flask example `server.py` are preserved
+A minimal single-inventory FastAPI API backed by CSV, with a manual Groq tool-calling CLI. The original `main.py` and Flask example `server.py` are preserved
 starter files, not the API entry point.
 
 ## Quick start
@@ -19,6 +18,42 @@ Alternatively, activate with `source .venv/bin/activate`, then use `python` and
 Open http://127.0.0.1:8000/docs for interactive API documentation.
 Stop with Ctrl+C; restarting the same command retains stock.
 Run only one API process/worker against the file.
+
+## CLI agent (second terminal)
+
+Keep the API running. Create a project-root `.env` using `.env.example` as a
+reference and set your own `GROQ_API_KEY` locally; never commit it. Then run:
+
+```bash
+uv run python agent.py
+```
+
+Configuration: `GROQ_MODEL` defaults to `llama-3.3-70b-versatile` and
+`API_BASE_URL` to `http://127.0.0.1:8000`. Existing environment variables take
+precedence over `.env`. Only the CLI entry point loads `.env`.
+
+Try “List my inventory”, “Create Rice with 12.5 kg”, “Remove 2 kg of Rice”,
+and “Show products below 10”. The assistant should ask about ambiguous names
+or missing units; it does not convert units or forecast demand. Type `exit` or
+`quit`, or use Ctrl+C/EOF to leave. A final answer ends a turn, not the session.
+
+Session context stays in memory until exit. Public user/agent messages, tool
+requests and tool results append immediately to project-root
+`conversation_log.csv` (`actor,message,tool_call,timestamp`); no private reasoning
+is requested or logged. Logs can contain your inventory and conversation data;
+keep them private. The agent never reads the inventory CSV directly.
+
+API writes and provider requests are not automatically retried. If a request
+times out, a write may already have applied: inspect inventory before retrying.
+Provider failures let you continue or quit without replaying completed tools.
+This is a single-user educational loop, not production infrastructure.
+
+Focused agent tests use mocked SDK/HTTP calls and temporary logs, without keys,
+`.env` reads or network requests:
+
+```bash
+uv run python -m unittest discover -s tests -p 'test_agent.py' -v
+```
 
 ## API
 
