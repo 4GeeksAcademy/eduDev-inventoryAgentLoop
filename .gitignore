@@ -1,0 +1,5 @@
+.env
+.venv/
+__pycache__/
+products.csv
+conversation_log.csv
