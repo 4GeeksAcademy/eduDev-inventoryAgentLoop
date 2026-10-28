@@ -1,5 +1,7 @@
 # Inventory API and CLI agent
 
+[Español](README.es.md) · [Assignment source](https://github.com/4GeeksAcademy/ai-engineering-syllabus/blob/main/content/projects/ai-basic-inventory-agent-loop/README.md)
+
 A minimal single-inventory FastAPI API backed by CSV, with a manual Groq tool-calling CLI. The original `main.py` and Flask example `server.py` are preserved
 starter files, not the API entry point.
 
@@ -10,19 +12,28 @@ the project root:
 
 ```bash
 uv sync
-uv run uvicorn api.app:app --host 127.0.0.1 --port 8000
+# Create only if absent; never overwrite an existing .env:
+if [ ! -e .env ]; then cp -n .env.example .env; fi
+# Terminal 1: API first
+uv run uvicorn api.app:app --reload
 ```
 
-Alternatively, activate with `source .venv/bin/activate`, then use `python` and
-`uvicorn` directly. A global `python` command is not required with `uv run`.
+The four direct dependencies are `fastapi`, `uvicorn`, `openai`, and
+`python-dotenv`. The agent uses the OpenAI SDK with Groq's compatible endpoint
+`https://api.groq.com/openai/v1`, not an agent framework.
+
+Optionally activate with `source .venv/bin/activate` in each terminal, then run
+the assignment commands `uvicorn api.app:app --reload` and `python agent.py`.
+A global `python` command is not required with `uv run`.
 Open http://127.0.0.1:8000/docs for interactive API documentation.
-Stop with Ctrl+C; restarting the same command retains stock.
+Stop the agent first (`exit`, `quit`, Ctrl+C or EOF), then stop the API with
+Ctrl+C. Relaunch API first and agent second; neither resets inventory or the log.
 Run only one API process/worker against the file.
 
 ## CLI agent (second terminal)
 
-Keep the API running. Create a project-root `.env` using `.env.example` as a
-reference and set your own `GROQ_API_KEY` locally; never commit it. Then run:
+Keep the API running. Edit the local `.env` created above and set your own
+`GROQ_API_KEY`; never commit or share it. In terminal 2, from the project root:
 
 ```bash
 uv run python agent.py
@@ -32,16 +43,20 @@ Configuration: `GROQ_MODEL` defaults to `llama-3.3-70b-versatile` and
 `API_BASE_URL` to `http://127.0.0.1:8000`. Existing environment variables take
 precedence over `.env`. Only the CLI entry point loads `.env`.
 
-Try “List my inventory”, “Create Rice with 12.5 kg”, “Remove 2 kg of Rice”,
-and “Show products below 10”. The assistant should ask about ambiguous names
+Try “Add Rice with 8 kg”, then immediately “Show alerts below 10”. Follow with
+“A delivery added 5 kg of Rice”, then “Sell 4 kg of Rice”. Expected stock is
+8 → 13 → 9 kg; alerts use strict `< 10`, so exactly 10 is not an alert.
+All requests use one shared inventory, not separate branch inventories. The assistant should ask about ambiguous names
 or missing units; it does not convert units or forecast demand. Type `exit` or
 `quit`, or use Ctrl+C/EOF to leave. A final answer ends a turn, not the session.
 
-Session context stays in memory until exit. Public user/agent messages, tool
+The four tools are `get_inventory`, `add_product`, `change_stock`, and
+`get_alerts`. Session context stays in memory until exit; a new session does not
+reload previous conversation history from the audit log. Public user/agent messages, tool
 requests and tool results append immediately to project-root
 `conversation_log.csv` (`actor,message,tool_call,timestamp`); no private reasoning
-is requested or logged. Logs can contain your inventory and conversation data;
-keep them private. The agent never reads the inventory CSV directly.
+is requested or logged. Logs are plaintext and can contain your inventory, conversation data, or secrets
+you type; keep them private and do not paste credentials into the chat. The agent never reads the inventory CSV directly.
 
 API writes and provider requests are not automatically retried. If a request
 times out, a write may already have applied: inspect inventory before retrying.
@@ -98,6 +113,20 @@ Tests start disposable local HTTP servers and set absolute temporary CSV paths;
 they never use your inventory or an LLM service. `.env`, `.venv`, bytecode,
 `products.csv`, and `conversation_log.csv` are ignored by Git. No API credentials
 are needed, and this API does not load `.env`. Never commit secrets.
+
+The bounded integration uses real local HTTP and mocked SDK responses, checks
+history, CSV persistence after API restart, and log append across agent sessions:
+
+```bash
+uv run python -m unittest discover -s tests -p 'test_integration.py' -v
+# Final local suite (no provider calls):
+uv run python -m unittest discover -s tests -v
+```
+
+No real Groq call has been verified here; credential-dependent verification is
+still pending. Before submission, follow the assignment's repository/link and
+demo requirements, and check that no credentials or private runtime CSVs are
+included. Publishing is a separate manual step.
 
 ### Contributors
 
